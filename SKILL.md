@@ -1,21 +1,45 @@
 ---
 name: youtube-summary
-version: "1.1.1"
+version: "1.3.0"
 author: giskard
 description: "Summarize any YouTube video by dropping the link in chat. Supports custom prompts — paste the URL followed by your instructions (e.g. 'focus on the technical details'). Triggers on YouTube URLs."
 tags: [youtube, video, summary, transcript]
 license: MIT
+homepage: https://github.com/chapati23
+metadata:
+  openclaw:
+    emoji: "📺"
+    requires:
+      bins: [python3, pass]
+      env: [TRANSCRIPT_API_KEY]
+    primaryEnv: TRANSCRIPT_API_KEY
 ---
 
 # YouTube Summary Skill
 
-Summarize YouTube videos by extracting transcripts and generating structured summaries.
+Summarize YouTube videos by extracting transcripts via [TranscriptAPI.com](https://transcriptapi.com) and generating structured summaries.
 
 ## Setup
 
-1. Sign up at [transcriptapi.com](https://transcriptapi.com) ($5/mo for 1,000 transcripts)
-2. Store the API key in `pass`: `pass insert transcriptapi/api-key`
-3. Install Python dependencies: `pip install -r skills/youtube-summary/requirements.txt`
+### Prerequisites
+
+- Python 3.10+
+- `pass` (Unix password manager) with GPG configured
+- A TranscriptAPI.com account ($5/mo for 1,000 transcripts)
+
+### Installation
+
+1. Sign up at [transcriptapi.com](https://transcriptapi.com) and get your API key
+2. Store the API key securely in `pass`:
+   ```bash
+   pass insert transcriptapi/api-key
+   ```
+3. Install Python dependencies:
+   ```bash
+   pip install -r skills/youtube-summary/requirements.txt
+   ```
+
+That's it. The skill reads the key from `pass` at runtime via a secure temp file — the key never appears in process listings or shell history.
 
 ## Detection
 
@@ -40,10 +64,12 @@ Trigger on messages containing YouTube URLs matching any of:
 _yt_key_file=$(mktemp) && pass transcriptapi/api-key > "$_yt_key_file" && python3 skills/youtube-summary/scripts/extract.py "YOUTUBE_URL_OR_ID" --api-key-file "$_yt_key_file"; rm -f "$_yt_key_file"
 ```
 
+**Security note:** The API key is written to a temp file and passed via `--api-key-file`, not as a CLI argument. The temp file is deleted immediately after the script runs. This avoids exposing the key in `ps` output.
+
 Parse stdout:
 - `PROGRESS:` lines → relay to user as status updates (optional)
 - `ERROR:` lines → relay error to user, stop
-- `RESULT:` line → parse the JSON after `RESULT: ` — it contains: `header`, `transcript`, `language`, `tokens`, `title`, `channel`, `duration_str`
+- `RESULT:` line → parse the JSON after `RESULT: ` — contains: `header`, `transcript`, `language`, `tokens`, `title`, `channel`, `duration_str`
 
 ### Step 2: Summarize the transcript
 
@@ -86,7 +112,8 @@ Use the extracted transcript to generate a summary. The summary language must ma
 
 ## Why TranscriptAPI?
 
-YouTube aggressively blocks datacenter/IPv6 ranges from accessing transcripts. Most cloud VPS (Hetzner, DigitalOcean, AWS, etc.) are blocked — the `youtube-transcript-api` library fails with "Could not find a transcript" for a huge portion of videos.
+YouTube aggressively blocks datacenter/IPv6 ranges from accessing transcripts. Most cloud VPS (Hetzner, DigitalOcean, AWS, etc.) are blocked — the `youtube-transcript-api` Python library fails with "Could not find a transcript" for most videos when running from a server.
 
-TranscriptAPI.com runs the requests from residential IPs, bypassing these blocks. The $5/mo gets you 1,000 reliable transcript fetches.
-- 💡 Tip: Add instructions after the URL to customize the summary (e.g. "focus on the technical details")
+TranscriptAPI.com proxies requests through residential IPs, bypassing these blocks reliably. The $5/mo plan covers 1,000 transcript fetches.
+
+💡 **Tip:** Add instructions after the URL to customize the summary (e.g. "focus on the technical details").
