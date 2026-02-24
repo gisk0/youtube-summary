@@ -1,6 +1,6 @@
 ---
 name: youtube-summary
-version: "1.3.1"
+version: "1.3.2"
 author: giskard
 description: "Summarize any YouTube video by dropping the link in chat. Supports custom prompts — paste the URL followed by your instructions (e.g. 'focus on the technical details'). Triggers on YouTube URLs."
 tags: [youtube, video, summary, transcript]
@@ -116,7 +116,7 @@ Use the extracted transcript to generate a summary. The summary language must ma
 
 ## Why TranscriptAPI?
 
-YouTube aggressively blocks datacenter/IPv6 ranges from accessing transcripts. Most cloud VPS (Hetzner, DigitalOcean, AWS, etc.) are blocked — the `youtube-transcript-api` Python library fails with "Could not find a transcript" for most videos when running from a server.
+YouTube aggressively blocks datacenter/IPv6 ranges from accessing transcripts. Most cloud VPS (Hetzner, DigitalOcean, AWS, etc.) are blocked — direct transcript fetching fails for most videos when running from a server.
 
 TranscriptAPI.com proxies requests through residential IPs, bypassing these blocks reliably. The $5/mo plan covers 1,000 transcript fetches.
 

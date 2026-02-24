@@ -2,14 +2,13 @@
 
 **Drop a YouTube link in chat → get an instant, structured summary.**
 
-An [OpenClaw](https://openclaw.com) skill that extracts video transcripts and generates concise summaries with key points and notable quotes. Supports custom prompts — just add your instructions after the URL.
+An [OpenClaw](https://openclaw.com) skill that extracts video transcripts via [TranscriptAPI.com](https://transcriptapi.com) and generates concise summaries with key points and notable quotes. Supports custom prompts — just add your instructions after the URL.
 
 ## ✨ Features
 
 - **Any YouTube URL** — `youtube.com/watch`, `youtu.be`, `/shorts/`, `/live/`, `m.youtube.com`
 - **Custom prompts** — "focus on the technical details", "list action items", "explain like I'm 5"
 - **Long video support** — handles videos of any length with smart truncation for very long transcripts
-- **Multi-language** — summaries match the transcript language automatically
 - **Telegram-optimized** — output fits Telegram's formatting and character limits
 
 ## 🚀 Quick Example
@@ -29,45 +28,42 @@ Giskard:
 
 ## 📦 Setup
 
+### Prerequisites
+
+- Python 3.10+
+- A [TranscriptAPI.com](https://transcriptapi.com) account ($5/mo for 1,000 transcripts)
+
 ### 1. Get a TranscriptAPI key
 
-Sign up at [transcriptapi.com](https://transcriptapi.com) — $5/mo for 1,000 transcripts.
+Sign up at [transcriptapi.com](https://transcriptapi.com) and copy your API key.
 
-### 2. Store the key in `pass`
+### 2. Provide the API key (choose one method)
 
+**Option A — Environment variable (simplest):**
 ```bash
-pass insert transcriptapi/api-key
-# Paste your API key when prompted
+export TRANSCRIPT_API_KEY="your-key-here"
 ```
 
-> **Note:** If you use GPG with multiple keys, init the path first:
-> ```bash
-> pass init --path transcriptapi <YOUR_GPG_KEY_IDS>
-> ```
+**Option B — `pass` password store (most secure):**
+```bash
+pass insert transcriptapi/api-key
+```
+
+The script reads `--api-key-file` first (used by the `pass` workflow), then falls back to the `TRANSCRIPT_API_KEY` environment variable.
 
 ### 3. Install Python dependencies
 
 ```bash
-pip install -r skills/youtube-summary/requirements.txt
+pip install -r requirements.txt
 ```
 
 That's it. Drop a YouTube link in chat and the skill kicks in automatically.
 
-## 🔧 Why TranscriptAPI? (And the fallback)
+## 🔧 Why TranscriptAPI?
 
-### The problem
+YouTube aggressively blocks transcript requests from datacenter IP ranges. If your OpenClaw instance runs on a VPS (Hetzner, DigitalOcean, AWS, Linode, etc.), direct transcript fetching will fail for most videos.
 
-YouTube aggressively blocks transcript requests from datacenter IP ranges. If your OpenClaw instance runs on a VPS (Hetzner, DigitalOcean, AWS, Linode, etc.), the popular `youtube-transcript-api` Python library will fail silently for most videos — returning "Could not find a transcript" even when captions exist.
-
-This affects the vast majority of self-hosted setups.
-
-### The solution
-
-[TranscriptAPI.com](https://transcriptapi.com) proxies requests through residential IPs, making transcript extraction reliable from any host. At $5/mo for 1,000 transcripts, it's the default and recommended approach.
-
-### Local fallback
-
-If you run OpenClaw on a residential IP (home server, local machine), the skill automatically falls back to the `youtube-transcript-api` library when no API key is configured — no cost, no signup needed. It also supports proxy configuration via the `YT_PROXY_URL` environment variable for `youtube-transcript-api`.
+[TranscriptAPI.com](https://transcriptapi.com) proxies requests through residential IPs, making transcript extraction reliable from any host. At $5/mo for 1,000 transcripts, it's a simple and cost-effective solution.
 
 ## 🎨 Custom Prompt Examples
 
@@ -84,11 +80,11 @@ If you run OpenClaw on a residential IP (home server, local machine), the skill 
 
 | Error | Cause | Fix |
 |---|---|---|
-| `Invalid API key` | TranscriptAPI key is wrong or expired | Check `pass transcriptapi/api-key` |
+| `Invalid API key` | TranscriptAPI key is wrong or expired | Check your key |
 | `No transcript available` | Video has no captions | Nothing to do — video has no transcript |
 | `Video not found` | Bad URL or private video | Double-check the URL |
 | `Rate limited` | Too many requests | Wait a moment, try again |
-| `SETUP_NEEDED` | No API key and library fallback failed (likely VPS IP block) | Sign up at transcriptapi.com |
+| `No API key provided` | Neither env var nor `--api-key-file` set | Set `TRANSCRIPT_API_KEY` or use `pass` |
 
 ## 📁 Files
 
