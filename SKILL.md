@@ -14,11 +14,7 @@ Summarize YouTube videos by extracting transcripts and generating structured sum
 ## Setup
 
 1. Sign up at [transcriptapi.com](https://transcriptapi.com) ($5/mo for 1,000 transcripts)
-2. Store the API key in `pass`:
-   ```bash
-   pass init --path transcriptapi 01A60665BAD5A8CC 48C81D44519B6336
-   pass insert transcriptapi/api-key
-   ```
+2. Store the API key in `pass`: `pass insert transcriptapi/api-key`
 3. Install Python dependencies: `pip install -r skills/youtube-summary/requirements.txt`
 
 ## Detection
