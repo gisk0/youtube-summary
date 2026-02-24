@@ -1,6 +1,6 @@
 ---
 name: youtube-summary
-version: "1.1.0"
+version: "1.1.1"
 author: giskard
 description: "Summarize any YouTube video by dropping the link in chat. Supports custom prompts — paste the URL followed by your instructions (e.g. 'focus on the technical details'). Triggers on YouTube URLs."
 tags: [youtube, video, summary, transcript]
