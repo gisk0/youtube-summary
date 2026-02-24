@@ -102,17 +102,22 @@ def get_transcript(video_id: str, api_key: str) -> tuple[str, str]:
 def main():
     parser = argparse.ArgumentParser(description="Extract YouTube video transcript and metadata")
     parser.add_argument("video", help="YouTube URL or video ID")
-    parser.add_argument("--api-key-file", help="Path to file containing TranscriptAPI key", required=True)
+    parser.add_argument("--api-key-file", help="Path to file containing TranscriptAPI key", default=None)
     args = parser.parse_args()
 
-    try:
-        with open(args.api_key_file) as f:
-            api_key = f.read().strip()
-    except OSError as e:
-        error(f"Cannot read API key file: {e}")
+    # Priority: --api-key-file > TRANSCRIPT_API_KEY env var
+    api_key = None
+    if args.api_key_file:
+        try:
+            with open(args.api_key_file) as f:
+                api_key = f.read().strip()
+        except OSError as e:
+            error(f"Cannot read API key file: {e}")
+    else:
+        api_key = os.environ.get("TRANSCRIPT_API_KEY", "").strip()
 
     if not api_key:
-        error("API key file is empty. Check your TranscriptAPI key.")
+        error("No API key provided. Either set TRANSCRIPT_API_KEY env var or pass --api-key-file.")
 
     try:
         video_id = extract_video_id(args.video)

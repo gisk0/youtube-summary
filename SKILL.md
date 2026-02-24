@@ -1,6 +1,6 @@
 ---
 name: youtube-summary
-version: "1.3.0"
+version: "1.3.1"
 author: giskard
 description: "Summarize any YouTube video by dropping the link in chat. Supports custom prompts — paste the URL followed by your instructions (e.g. 'focus on the technical details'). Triggers on YouTube URLs."
 tags: [youtube, video, summary, transcript]
@@ -10,7 +10,7 @@ metadata:
   openclaw:
     emoji: "📺"
     requires:
-      bins: [python3, pass]
+      bins: [python3]
       env: [TRANSCRIPT_API_KEY]
     primaryEnv: TRANSCRIPT_API_KEY
 ---
@@ -24,22 +24,19 @@ Summarize YouTube videos by extracting transcripts via [TranscriptAPI.com](https
 ### Prerequisites
 
 - Python 3.10+
-- `pass` (Unix password manager) with GPG configured
 - A TranscriptAPI.com account ($5/mo for 1,000 transcripts)
+- Optional: `pass` (Unix password manager) for secure key storage
 
 ### Installation
 
 1. Sign up at [transcriptapi.com](https://transcriptapi.com) and get your API key
-2. Store the API key securely in `pass`:
-   ```bash
-   pass insert transcriptapi/api-key
-   ```
+2. Provide the API key via **one** of these methods:
+   - **Environment variable (simplest):** `export TRANSCRIPT_API_KEY="your-key-here"`
+   - **`pass` password store (most secure):** `pass insert transcriptapi/api-key`
 3. Install Python dependencies:
    ```bash
    pip install -r skills/youtube-summary/requirements.txt
    ```
-
-That's it. The skill reads the key from `pass` at runtime via a secure temp file — the key never appears in process listings or shell history.
 
 ## Detection
 
@@ -60,11 +57,18 @@ Trigger on messages containing YouTube URLs matching any of:
 
 ### Step 1: Extract transcript
 
+**If using `pass`:**
 ```bash
 _yt_key_file=$(mktemp) && pass transcriptapi/api-key > "$_yt_key_file" && python3 skills/youtube-summary/scripts/extract.py "YOUTUBE_URL_OR_ID" --api-key-file "$_yt_key_file"; rm -f "$_yt_key_file"
 ```
 
-**Security note:** The API key is written to a temp file and passed via `--api-key-file`, not as a CLI argument. The temp file is deleted immediately after the script runs. This avoids exposing the key in `ps` output.
+**If using env var:**
+```bash
+python3 skills/youtube-summary/scripts/extract.py "YOUTUBE_URL_OR_ID"
+```
+(Reads `TRANSCRIPT_API_KEY` from the environment automatically.)
+
+**Security note:** The `pass` + temp file approach avoids exposing the key in `ps` output or shell history. The env var approach is simpler but the key is visible in the process environment.
 
 Parse stdout:
 - `PROGRESS:` lines → relay to user as status updates (optional)
