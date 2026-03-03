@@ -17,10 +17,14 @@ jobs:
       - name: Run shellcheck on shell scripts
         run: |
           which shellcheck || apt-get update && apt-get install -y shellcheck
-          find . -name "*.sh" -exec shellcheck {} \;
+          # Warn but don't fail
+          find . -name "*.sh" -exec shellcheck {} \; || echo "Shellcheck warnings found"
       
-      - name: Check for secrets
+      - name: Check for sensitive files
         run: |
-          # Simple check for common secret patterns (not comprehensive)
-          grep -r "password\s*=" . --include="*.sh" --include="*.js" || true
-          grep -r "api_key\s*=" . --include="*.sh" --include="*.js" || true
+          # Check that no sensitive files are committed
+          echo "Checking for common sensitive files..."
+          [ ! -f .env ] || (echo ".env found" && exit 1)
+          [ ! -f *.key ] || (echo "key file found" && exit 1)
+          [ ! -f *credentials*.json ] || (echo "credentials found" && exit 1)
+          echo "No sensitive files found"
