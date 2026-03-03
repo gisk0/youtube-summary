@@ -93,8 +93,8 @@ def get_transcript(video_id: str, api_key: str) -> tuple[str, str]:
 
     except requests.exceptions.Timeout:
         error("API_ERROR: Request timed out. Try again.")
-    except requests.exceptions.RequestException as e:
-        error(f"API_ERROR: Network error — could not reach TranscriptAPI.")
+    except requests.exceptions.RequestException:
+        error("API_ERROR: Network error — could not reach TranscriptAPI.")
     except json.JSONDecodeError:
         error("API_ERROR: Invalid response from TranscriptAPI.")
 

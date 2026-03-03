@@ -1,0 +1,40 @@
+version: 0.1
+cli:
+  version: 1.25.0
+plugins:
+  sources:
+    - id: trunk
+      ref: v1.7.5
+      uri: https://github.com/trunk-io/plugins
+runtimes:
+  enabled:
+    - node@22.16.0
+    - python@3.10.8
+lint:
+  enabled:
+    - ruff@0.11.12
+    - checkov@3.2.506
+    - trufflehog@3.93.6
+    - codespell@2.4.1
+    - markdownlint@0.48.0
+    - git-diff-check
+  ignore:
+    - linters: [checkov]
+      paths:
+        - "*.json"
+        - "*.md"
+actions:
+  disabled:
+    - trunk-check-pre-push
+  definitions:
+    - id: trunk-check-all-pre-push
+      display_name: Trunk Check All Pre-Push
+      description: Run trunk check --all before pushing
+      run: trunk check --all
+      triggers:
+        - git_hooks: [pre-push]
+  enabled:
+    - trunk-announce
+    - trunk-fmt-pre-commit
+    - trunk-upgrade-available
+    - trunk-check-all-pre-push
