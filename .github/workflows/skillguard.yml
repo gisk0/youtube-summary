@@ -26,13 +26,12 @@ jobs:
           # Clone scanner
           git clone -q https://github.com/gisk0/skillguard-scanner.git /tmp/scanner
           
-          # Get skill name from repo
+          # Get skill name
           SKILL_NAME=$(echo "${{ github.repository }}" | sed 's/gisk0\///')
           
           # Create skills directory structure
-          mkdir -p /tmp/skills/$SKILL_NAME
-          cp -r repo/* /tmp/skills/$SKILL_NAME/ 2>/dev/null || true
-          cp -r repo/.* /tmp/skills/$SKILL_NAME/ 2>/dev/null || true
+          mkdir -p /tmp/skills
+          mv repo /tmp/skills/$SKILL_NAME
           
           # Run scanner
           python3 /tmp/scanner/scripts/scanner.py \
@@ -40,17 +39,19 @@ jobs:
             --skill "$SKILL_NAME" \
             --json-out /tmp/skillguard-report.json
           
-          # Check for CRITICAL/HIGH findings
-          if grep -q '"risk_level": "CRITICAL"' /tmp/skillguard-report.json; then
-            echo "❌ CRITICAL security issues found!"
-            cat /tmp/skillguard-report.json
-            exit 1
-          fi
-          
-          if grep -q '"risk_level": "HIGH"' /tmp/skillguard-report.json; then
-            echo "⚠️ HIGH security issues found!"
-            cat /tmp/skillguard-report.json
-            exit 1
+          # Check results
+          if [ -f /tmp/skillguard-report.json ]; then
+            if grep -q '"risk_level": "CRITICAL"' /tmp/skillguard-report.json; then
+              echo "❌ CRITICAL security issues found!"
+              cat /tmp/skillguard-report.json
+              exit 1
+            fi
+            
+            if grep -q '"risk_level": "HIGH"' /tmp/skillguard-report.json; then
+              echo "⚠️ HIGH security issues found!"
+              cat /tmp/skillguard-report.json
+              exit 1
+            fi
           fi
           
           echo "✅ No critical security issues"
