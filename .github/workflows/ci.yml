@@ -5,7 +5,9 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
-  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   quality:
@@ -13,25 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Run shellcheck on shell scripts
-        run: |
-          if command -v shellcheck &> /dev/null; then
-            find . -name "*.sh" -type f | while read -r f; do
-              shellcheck "$f" || true
-            done
-          else
-            apt-get update && apt-get install -y shellcheck
-            find . -name "*.sh" -type f | while read -r f; do
-              shellcheck "$f" || true
-            done
-          fi
-          echo "Shellcheck done"
-      
-      - name: Check for sensitive files
-        run: |
-          echo "Checking for common sensitive files..."
-          [ ! -f .env ] || (echo ".env found" && exit 1)
-          [ ! -f "*.key" ] || (echo "key file found" && exit 1)
-          [ ! -f "*credentials*.json" ] || (echo "credentials found" && exit 1)
-          echo "No sensitive files found"
+      - uses: gisk0/skillguard-scanner/action@main
+        with:
+          skill-dir: "."
