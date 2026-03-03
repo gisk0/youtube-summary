@@ -13,41 +13,44 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          path: repo
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
       - name: Run SkillGuard Scanner
         run: |
-          echo "Repository: ${{ github.repository }}"
-          echo "Workspace: ${{ github.workspace }}"
-          ls -la
+          # Clone scanner
+          git clone -q https://github.com/gisk0/skillguard-scanner.git /tmp/scanner
           
-          # Clone the scanner
-          cd /tmp
-          rm -rf skillguard-scanner
-          git clone -q https://github.com/gisk0/skillguard-scanner.git
-          cd skillguard-scanner
+          # Get skill name from repo
+          SKILL_NAME=$(echo "${{ github.repository }}" | sed 's/gisk0\///')
           
-          # Check if skill/ subfolder exists (some repos have it)
-          WORKSPACE="${{ github.workspace }}"
-          if [ -d "$WORKSPACE/skill" ]; then
-            SKILL_DIR="$WORKSPACE/skill"
-            SKILL_NAME=$(echo "${{ github.repository }}" | sed 's/gisk0\///')
-          else
-            # Skill is at root level
-            SKILL_DIR="$WORKSPACE"
-            SKILL_NAME=$(echo "${{ github.repository }}" | sed 's/gisk0\///')
-          fi
-          
-          echo "Scanning: $SKILL_NAME from $SKILL_DIR"
+          # Create skills directory structure
+          mkdir -p /tmp/skills/$SKILL_NAME
+          cp -r repo/* /tmp/skills/$SKILL_NAME/ 2>/dev/null || true
+          cp -r repo/.* /tmp/skills/$SKILL_NAME/ 2>/dev/null || true
           
           # Run scanner
-          python3 scripts/scanner.py \
-            --skills-dir "$SKILL_DIR" \
+          python3 /tmp/scanner/scripts/scanner.py \
+            --skills-dir /tmp/skills \
             --skill "$SKILL_NAME" \
-            --json-out /tmp/skillguard-report.json 2>&1 || true
+            --json-out /tmp/skillguard-report.json
           
-          # Show results
-          if [ -f /tmp/skillguard-report.json ]; then
+          # Check for CRITICAL/HIGH findings
+          if grep -q '"risk_level": "CRITICAL"' /tmp/skillguard-report.json; then
+            echo "❌ CRITICAL security issues found!"
             cat /tmp/skillguard-report.json
+            exit 1
           fi
           
-          echo "✅ Scan completed"
+          if grep -q '"risk_level": "HIGH"' /tmp/skillguard-report.json; then
+            echo "⚠️ HIGH security issues found!"
+            cat /tmp/skillguard-report.json
+            exit 1
+          fi
+          
+          echo "✅ No critical security issues"
