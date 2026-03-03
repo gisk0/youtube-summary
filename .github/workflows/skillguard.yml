@@ -1,0 +1,54 @@
+name: SkillGuard Security Scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  skillguard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install osv-scanner
+
+      - name: Run OSV Scanner
+        run: |
+          osv-scanner --recursive . --lockfile=Gemfile.lock --lockfile=package-lock.json --lockfile=requirements.txt --lockfile=go.mod || true
+
+      - name: Run SkillGuard Scanner
+        run: |
+          # Clone the scanner
+          cd /tmp
+          git clone https://github.com/gisk0/skillguard-scanner.git
+          cd skillguard-scanner
+          
+          # Get the skill name from repo (extract from repo name)
+          SKILL_NAME=$(echo "${{ github.repository }}" | sed 's/gisk0-//')
+          
+          # Run scanner
+          python3 scripts/scanner.py --skills-dir . --skill "$SKILL_NAME" --json-out /tmp/skillguard-report.json
+          
+          # Check for CRITICAL/HIGH findings
+          if [ -f /tmp/skillguard-report.json ]; then
+            CRITICAL=$(cat /tmp/skillguard-report.json | grep -c '"severity": "CRITICAL"' || true)
+            HIGH=$(cat /tmp/skillguard-report.json | grep -c '"severity": "HIGH"' || true)
+            
+            if [ "$CRITICAL" -gt 0 ] || [ "$HIGH" -gt 0 ]; then
+              echo "❌ Security issues found!"
+              cat /tmp/skillguard-report.json
+              exit 1
+            fi
+          fi
+          
+          echo "✅ No critical security issues found"
