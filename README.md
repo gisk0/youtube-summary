@@ -14,7 +14,7 @@ An [OpenClaw](https://openclaw.com) skill that extracts video transcripts via [T
 ## 🚀 Quick Example
 
 You:
-> https://www.youtube.com/watch?v=dQw4w9WgXcQ summarize the key arguments
+> <https://www.youtube.com/watch?v=dQw4w9WgXcQ> summarize the key arguments
 
 Giskard:
 > 📺 **Never Gonna Give You Up** — Rick Astley (3min)
@@ -40,11 +40,13 @@ Sign up at [transcriptapi.com](https://transcriptapi.com) and copy your API key.
 ### 2. Provide the API key (choose one method)
 
 **Option A — Environment variable (simplest):**
+
 ```bash
 export TRANSCRIPT_API_KEY="your-key-here"
 ```
 
 **Option B — `pass` password store (most secure):**
+
 ```bash
 pass insert transcriptapi/api-key
 ```
@@ -88,7 +90,7 @@ YouTube aggressively blocks transcript requests from datacenter IP ranges. If yo
 
 ## 📁 Files
 
-```
+```text
 youtube-summary/
 ├── SKILL.md              # Agent instructions (how the AI uses this skill)
 ├── README.md             # This file (for humans)

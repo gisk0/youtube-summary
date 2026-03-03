@@ -34,6 +34,7 @@ Summarize YouTube videos by extracting transcripts via [TranscriptAPI.com](https
    - **Environment variable (simplest):** `export TRANSCRIPT_API_KEY="your-key-here"`
    - **`pass` password store (most secure):** `pass insert transcriptapi/api-key`
 3. Install Python dependencies:
+
    ```bash
    pip install -r skills/youtube-summary/requirements.txt
    ```
@@ -41,6 +42,7 @@ Summarize YouTube videos by extracting transcripts via [TranscriptAPI.com](https
 ## Detection
 
 Trigger on messages containing YouTube URLs matching any of:
+
 - `youtube.com/watch?v=ID`
 - `youtu.be/ID`
 - `youtube.com/shorts/ID`
@@ -58,22 +60,26 @@ Trigger on messages containing YouTube URLs matching any of:
 ### Step 1: Extract transcript
 
 **If using `pass`:**
+
 ```bash
 _yt_key_file=$(mktemp) && pass transcriptapi/api-key > "$_yt_key_file" && python3 skills/youtube-summary/scripts/extract.py "YOUTUBE_URL_OR_ID" --api-key-file "$_yt_key_file"; rm -f "$_yt_key_file"
 ```
 
 **If using env var:**
+
 ```bash
 python3 skills/youtube-summary/scripts/extract.py "YOUTUBE_URL_OR_ID"
 ```
+
 (Reads `TRANSCRIPT_API_KEY` from the environment automatically.)
 
 **Security note:** The `pass` + temp file approach avoids exposing the key in `ps` output or shell history. The env var approach is simpler but the key is visible in the process environment.
 
 Parse stdout:
+
 - `PROGRESS:` lines → relay to user as status updates (optional)
 - `ERROR:` lines → relay error to user, stop
-- `RESULT:` line → parse the JSON after `RESULT: ` — contains: `header`, `transcript`, `language`, `tokens`, `title`, `channel`, `duration_str`
+- `RESULT:` line → parse the JSON after `RESULT:` — contains: `header`, `transcript`, `language`, `tokens`, `title`, `channel`, `duration_str`
 
 ### Step 2: Summarize the transcript
 
@@ -85,7 +91,7 @@ Use the extracted transcript to generate a summary. The summary language must ma
 
 **Default summary format** (use when no custom prompt given):
 
-```
+```text
 {header}
 
 **TL;DR:** 2-3 sentence summary.
