@@ -16,31 +16,38 @@ jobs:
 
       - name: Run SkillGuard Scanner
         run: |
-          echo "Running SkillGuard scanner..."
+          echo "Repository: ${{ github.repository }}"
+          echo "Workspace: ${{ github.workspace }}"
+          ls -la
           
-          # Clone the scanner (quietly)
+          # Clone the scanner
           cd /tmp
           rm -rf skillguard-scanner
           git clone -q https://github.com/gisk0/skillguard-scanner.git
           cd skillguard-scanner
           
-          # Get skill name from repo
-          REPO_NAME=$(echo "${{ github.repository }}" | sed 's/gisk0\///')
-          echo "Scanning skill: $REPO_NAME"
-          
-          # Run scanner (workspace is at $1)
-          cd ${{ github.workspace }}
-          python3 /tmp/skillguard-scanner/scripts/scanner.py \
-            --skills-dir . \
-            --skill "$REPO_NAME" \
-            --json-out /tmp/skillguard-report.json 2>&1 || true
-          
-          # Report results
-          if [ -f /tmp/skillguard-report.json ]; then
-            echo "Scan complete. Results:"
-            cat /tmp/skillguard-report.json
+          # Check if skill/ subfolder exists (some repos have it)
+          WORKSPACE="${{ github.workspace }}"
+          if [ -d "$WORKSPACE/skill" ]; then
+            SKILL_DIR="$WORKSPACE/skill"
+            SKILL_NAME=$(echo "${{ github.repository }}" | sed 's/gisk0\///')
           else
-            echo "No report generated - scanner may have issues"
+            # Skill is at root level
+            SKILL_DIR="$WORKSPACE"
+            SKILL_NAME=$(echo "${{ github.repository }}" | sed 's/gisk0\///')
           fi
           
-          echo "✅ SkillGuard scan completed"
+          echo "Scanning: $SKILL_NAME from $SKILL_DIR"
+          
+          # Run scanner
+          python3 scripts/scanner.py \
+            --skills-dir "$SKILL_DIR" \
+            --skill "$SKILL_NAME" \
+            --json-out /tmp/skillguard-report.json 2>&1 || true
+          
+          # Show results
+          if [ -f /tmp/skillguard-report.json ]; then
+            cat /tmp/skillguard-report.json
+          fi
+          
+          echo "✅ Scan completed"
